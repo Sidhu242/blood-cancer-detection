@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blood Cancer Detection</title>
+    <!-- Removed Google Fonts CDN for offline use -->
+    <style>
+        body {
+            background: #f4f6f8;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background: #fff;
+            padding: 2rem 2.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+        }
+        h1 {
+            color: #2d3e50;
+            margin-bottom: 1.5rem;
+        }
+        form {
+            margin-bottom: 1.5rem;
+        }
+        input[type="file"] {
+            margin-bottom: 1rem;
+        }
+        button {
+            background: #1976d2;
+            color: #fff;
+            border: none;
+            padding: 0.7rem 1.5rem;
+            border-radius: 6px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background: #125ea2;
+        }
+        .result {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            border-radius: 8px;
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+        .result img {
+            margin-top: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Blood Cancer Detection</h1>
+        <form method="POST" enctype="multipart/form-data">
+            <div style="margin-bottom:0.5rem;">
+                <label><b>Upload Image or PDF:</b></label><br>
+                <input type="file" name="file" accept="image/*,.pdf" multiple>
+            </div>
+            <!-- Removed image URL input for offline use -->
+            <button type="submit">Predict</button>
+        </form>
+        {% if error %}
+        <div class="result" style="background:#ffebee;color:#c62828;">
+            <h3>{{ error }}</h3>
+        </div>
+        {% endif %}
+        {% if label %}
+        <div class="result">
+            <h2>Prediction: {{ label }}</h2>
+            <h3>Confidence:</h3>
+            <div style="background:#c8e6c9;border-radius:8px;overflow:hidden;width:80%;margin:0 auto 1rem auto;">
+                <div style="width:{{ confidence }}%;background:#43a047;color:#fff;padding:0.5rem 0;transition:width 0.5s;">{{ confidence }}%</div>
+            </div>
+            <img src="{{ image_path }}" width="300" alt="Uploaded Cell Image">
+        </div>
+        {% endif %}
+        <div style="margin-top:2rem;font-size:0.95em;color:#888;">
+            <b>Model version:</b> {{ model_version or 'N/A' }}
+        </div>
+    </div>
+</body>
+</html>
