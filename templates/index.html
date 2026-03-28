@@ -3,94 +3,217 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Blood Cancer Detection</title>
-    <!-- Removed Google Fonts CDN for offline use -->
+    <title>Blood Cancer Detection System</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        brand: { 50: '#eef2ff', 100: '#e0e7ff', 500: '#6366f1', 600: '#4f46e5', 900: '#312e81' }
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        body {
-            background: #f4f6f8;
-            font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            margin: 0;
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
         }
-        .container {
-            background: #fff;
-            padding: 2rem 2.5rem;
-            border-radius: 12px;
-            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
-            text-align: center;
-            max-width: 400px;
-            width: 100%;
+        .float-animation { animation: float 6s ease-in-out infinite; }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
         }
-        h1 {
-            color: #2d3e50;
-            margin-bottom: 1.5rem;
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-        form {
-            margin-bottom: 1.5rem;
-        }
-        input[type="file"] {
-            margin-bottom: 1rem;
-        }
-        button {
-            background: #1976d2;
-            color: #fff;
-            border: none;
-            padding: 0.7rem 1.5rem;
-            border-radius: 6px;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        button:hover {
-            background: #125ea2;
-        }
-        .result {
-            margin-top: 1.5rem;
-            padding: 1rem;
-            border-radius: 8px;
-            background: #e3f2fd;
-            color: #1976d2;
-        }
-        .result img {
-            margin-top: 1rem;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        }
+        .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
     </style>
 </head>
-<body>
-    <div class="container">
-        <h1>Blood Cancer Detection</h1>
-        <form method="POST" enctype="multipart/form-data">
-            <div style="margin-bottom:0.5rem;">
-                <label><b>Upload Image or PDF:</b></label><br>
-                <input type="file" name="file" accept="image/*,.pdf" multiple>
+<body class="min-h-screen bg-gradient-to-br from-brand-50 via-white to-blue-50 font-sans text-gray-800 flex flex-col items-center justify-start p-4 md:p-8 relative overflow-x-hidden">
+    
+    <!-- Background Elements -->
+    <div class="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-brand-100 blur-[100px] opacity-70 z-0 pointer-events-none"></div>
+    <div class="fixed bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-blue-100 blur-[100px] opacity-70 z-0 pointer-events-none"></div>
+
+    <main class="w-full max-w-4xl z-10 flex flex-col items-center">
+        
+        <!-- Header -->
+        <div class="text-center mb-8 float-animation">
+            <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white shadow-lg border border-brand-50 mb-4">
+                <svg class="w-8 h-8 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
+                </svg>
             </div>
-            <!-- Removed image URL input for offline use -->
-            <button type="submit">Predict</button>
-        </form>
-        {% if error %}
-        <div class="result" style="background:#ffebee;color:#c62828;">
-            <h3>{{ error }}</h3>
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-900 tracking-tight">Blood Cancer Detector</h1>
+            <p class="text-sm md:text-base text-gray-500 mt-2 font-medium">Upload microscopic cell images for AI analysis</p>
+        </div>
+
+        <!-- Upload Form Card -->
+        <div class="glass-card rounded-[2rem] p-6 md:p-8 w-full max-w-lg mb-8 relative">
+            
+            {% if errors %}
+                {% for error in errors %}
+                <div class="mb-4 p-4 rounded-xl bg-red-50 border border-red-100 text-red-600 flex items-start gap-3">
+                    <svg class="w-5 h-5 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                    </svg>
+                    <span class="text-sm font-medium">{{ error }}</span>
+                </div>
+                {% endfor %}
+            {% endif %}
+
+            <form method="POST" enctype="multipart/form-data" id="uploadForm" class="space-y-6">
+                <!-- File Input Zone -->
+                <div class="relative group">
+                    <input type="file" name="file" id="fileInput" accept="image/*,.pdf" multiple class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" required>
+                    <div id="dropZone" class="border-2 border-dashed border-brand-200 rounded-2xl bg-white/50 group-hover:bg-brand-50 group-hover:border-brand-400 transition-all duration-200 p-8 text-center flex flex-col items-center justify-center min-h-[160px]">
+                        <div id="uploadIcon">
+                            <svg class="w-10 h-10 text-brand-400 group-hover:text-brand-500 transition-colors mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                            </svg>
+                        </div>
+                        <p id="fileName" class="text-sm font-semibold text-gray-700">Choose images or drag & drop</p>
+                        <p id="fileDesc" class="text-xs text-gray-400 mt-1">Select multiple JPEGs, PNGs, or PDFs</p>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" id="submitBtn" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-3.5 px-6 rounded-xl shadow-lg transition-all active:scale-[0.98] flex items-center justify-center gap-2 group relative overflow-hidden">
+                    <span id="btnText" class="relative">Analyze Images</span>
+                    <svg id="btnIcon" class="w-4 h-4 relative transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                    </svg>
+                    <!-- Spinner -->
+                    <svg id="spinner" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white hidden relative" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </button>
+            </form>
+        </div>
+
+        <!-- Gallery Results Section -->
+        {% if results %}
+        <div class="w-full mt-4">
+            <h2 class="text-xl font-bold text-gray-800 mb-6 text-center">Analysis Results ({{ results|length }} images)</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                
+                {% for res in results %}
+                <div class="glass-card rounded-2xl p-5 flex flex-col justify-between animate-fade-in" style="animation-delay: {{ loop.index0 * 0.1 }}s;">
+                    
+                    <div class="flex items-center justify-between mb-4 pb-3 border-b border-gray-100">
+                        <span class="text-xs font-semibold text-gray-500 truncate max-w-[120px]">{{ res.filename }}</span>
+                        <!-- Badge -->
+                        {% if res.label == 'Cancer' %}
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700">
+                            <span class="w-1.5 h-1.5 rounded-full bg-red-500 mr-1.5 animate-pulse"></span>
+                            Leukemia
+                        </span>
+                        {% else %}
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700">
+                            <span class="w-1.5 h-1.5 rounded-full bg-green-500 mr-1.5"></span>
+                            Normal
+                        </span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Image Preview -->
+                    <div class="rounded-xl overflow-hidden border border-gray-100/50 shadow-sm bg-white p-1 mb-4 h-40">
+                        <img src="{{ res.image_path }}" alt="{{ res.filename }}" class="w-full h-full object-cover rounded-lg hover:scale-105 transition-transform duration-500">
+                    </div>
+
+                    <!-- Confidence Bar -->
+                    <div class="bg-gray-50 p-3 rounded-xl border border-gray-100">
+                        <div class="flex justify-between items-center mb-1.5">
+                            <span class="text-xs font-medium text-gray-600">Confidence</span>
+                            <span class="text-xs font-bold {% if res.label == 'Cancer' %}text-red-600{% else %}text-green-600{% endif %}">{{ res.confidence }}%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
+                            <div class="h-1.5 rounded-full transition-all duration-1000 ease-out {% if res.label == 'Cancer' %}bg-red-500{% else %}bg-green-500{% endif %}" style="width: 0%" data-width="{{ res.confidence }}%"></div>
+                        </div>
+                    </div>
+
+                </div>
+                {% endfor %}
+
+            </div>
+            
+            <div class="mt-8 text-center pb-8">
+                <a href="/" class="inline-flex items-center gap-2 text-sm text-brand-600 hover:text-brand-800 font-medium px-4 py-2 rounded-full hover:bg-white shadow transition-all">
+                    Start new analysis <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                </a>
+            </div>
         </div>
         {% endif %}
-        {% if label %}
-        <div class="result">
-            <h2>Prediction: {{ label }}</h2>
-            <h3>Confidence:</h3>
-            <div style="background:#c8e6c9;border-radius:8px;overflow:hidden;width:80%;margin:0 auto 1rem auto;">
-                <div style="width:{{ confidence }}%;background:#43a047;color:#fff;padding:0.5rem 0;transition:width 0.5s;">{{ confidence }}%</div>
-            </div>
-            <img src="{{ image_path }}" width="300" alt="Uploaded Cell Image">
+        
+        <!-- Footer -->
+        <div class="my-6 text-center">
+            <p class="text-xs text-gray-400 font-medium">Model Build: <span class="bg-white/50 px-2 py-0.5 rounded-md border border-gray-200/50">{{ model_version or 'v1.0' }}</span></p>
         </div>
-        {% endif %}
-        <div style="margin-top:2rem;font-size:0.95em;color:#888;">
-            <b>Model version:</b> {{ model_version or 'N/A' }}
-        </div>
-    </div>
+    </main>
+
+    <script>
+        // Update file name on selection
+        const fileInput = document.getElementById('fileInput');
+        const fileNameDisplay = document.getElementById('fileName');
+        const fileDesc = document.getElementById('fileDesc');
+        const uploadIcon = document.getElementById('uploadIcon');
+
+        fileInput.addEventListener('change', function(e) {
+            const files = e.target.files;
+            if (files.length > 0) {
+                if(files.length === 1) {
+                    fileNameDisplay.textContent = files[0].name;
+                } else {
+                    fileNameDisplay.textContent = `${files.length} files selected`;
+                }
+                fileDesc.textContent = 'Ready to analyze';
+                uploadIcon.innerHTML = `<svg class="w-10 h-10 text-brand-500 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+            }
+        });
+
+        // Loading state
+        const form = document.getElementById('uploadForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const btnText = document.getElementById('btnText');
+        const btnIcon = document.getElementById('btnIcon');
+        const spinner = document.getElementById('spinner');
+
+        if(form && submitBtn) {
+            form.addEventListener('submit', function() {
+                if(fileInput.files.length === 0) return;
+                btnText.textContent = 'Processing...';
+                btnIcon.classList.add('hidden');
+                spinner.classList.remove('hidden');
+                submitBtn.classList.add('opacity-90', 'cursor-not-allowed');
+                
+                // Allow form submit to continue
+            });
+        }
+
+        // Animate progress bars
+        document.addEventListener('DOMContentLoaded', () => {
+            const progressBars = document.querySelectorAll('[data-width]');
+            progressBars.forEach((bar) => {
+                setTimeout(() => {
+                    bar.style.width = bar.getAttribute('data-width');
+                }, 300);
+            });
+        });
+    </script>
 </body>
 </html>

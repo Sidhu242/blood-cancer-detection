@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: blood-cancer-predictor
+    env: python
+    buildCommand: pip install -r requirements.txt && apt-get update && apt-get install -y poppler-utils
+    startCommand: gunicorn app:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.12
