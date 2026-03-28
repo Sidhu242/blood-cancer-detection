@@ -21,35 +21,56 @@ except Exception:
 
 IMG_SIZE = 224
 
-def predict_image(img_path):
-    def predict_image_pil(pil_img):
+def is_valid_blood_sample(pil_img):
+    try:
+        # Convert to RGB array
         img = pil_img.convert('RGB')
-        img = img.resize((IMG_SIZE, IMG_SIZE))
-        img_array = np.array(img) / 255.0
-        img_array = np.expand_dims(img_array, axis=0)
-        prediction = model.predict(img_array)[0][0]
-        if prediction > 0.5:
-            label = "Normal"
-            confidence = prediction
-        else:
-            label = "Cancer"
-            confidence = 1 - prediction
-        return label, round(float(confidence) * 100, 2)
-    img = image.load_img(img_path, target_size=(IMG_SIZE, IMG_SIZE))
-    img_array = image.img_to_array(img)
+        # Resize to small image to speed up math and average out noise
+        img.thumbnail((300, 300))
+        img_array = np.array(img)
+        
+        # 1. Check if it's too dark
+        mean_brightness = np.mean(img_array)
+        if mean_brightness < 60: 
+            return False, "Image is too dark to be a microscopic slide."
+            
+        std_dev = np.std(img_array)
+        if std_dev < 10:
+            return False, "Image lacks structural detail (possibly a graphic/screenshot)."
+
+        # 2. Check for grayscale (x-rays, documents)
+        mean_r = np.mean(img_array[:,:,0])
+        mean_g = np.mean(img_array[:,:,1])
+        mean_b = np.mean(img_array[:,:,2])
+        channel_diff = abs(mean_r - mean_g) + abs(mean_g - mean_b) + abs(mean_r - mean_b)
+        if channel_diff < 15:
+             return False, "Image appears grayscale. A stained blood sample is required."
+
+        # 3. Check color distribution: Blood smears rarely have green as the dominant channel.
+        if mean_g > mean_r + 20 and mean_g > mean_b + 20:
+             return False, "Unusual color profile (too green) for a blood smear."
+
+        return True, "Valid"
+    except Exception as e:
+        return False, f"Could not analyze image structure: {str(e)}"
+
+def predict_image_pil(pil_img):
+    img = pil_img.convert('RGB')
+    img = img.resize((IMG_SIZE, IMG_SIZE))
+    img_array = np.array(img) / 255.0
     img_array = np.expand_dims(img_array, axis=0)
-    img_array = img_array / 255.0
-
     prediction = model.predict(img_array)[0][0]
-
     if prediction > 0.5:
         label = "Normal"
         confidence = prediction
     else:
         label = "Cancer"
         confidence = 1 - prediction
-
     return label, round(float(confidence) * 100, 2)
+
+def predict_image(img_path):
+    img = image.load_img(img_path, target_size=(IMG_SIZE, IMG_SIZE))
+    return predict_image_pil(img)
 
 @app.route("/", methods=["GET", "POST"])
 def index():
@@ -83,6 +104,11 @@ def index():
                             errors.append(f"{filename}: No images found in PDF.")
                         else:
                             pil_img = images[0]
+                            is_valid, reason = is_valid_blood_sample(pil_img)
+                            if not is_valid:
+                                errors.append(f"{filename} rejected: {reason}")
+                                continue
+                                
                             label, confidence = predict_image_pil(pil_img)
                             preview_filename = f"pdf_preview_{safe_name}.jpg"
                             pil_img.save(os.path.join("static", preview_filename))
@@ -99,7 +125,14 @@ def index():
                     filepath = os.path.join("static", safe_name)
                     file.save(filepath)
                     try:
-                        label, confidence = predict_image(filepath)
+                        from PIL import Image
+                        pil_img = Image.open(filepath)
+                        is_valid, reason = is_valid_blood_sample(pil_img)
+                        if not is_valid:
+                            errors.append(f"{filename} rejected: {reason}")
+                            continue
+                            
+                        label, confidence = predict_image_pil(pil_img)
                         image_url = url_for('static', filename=safe_name)
                         results.append({
                             'filename': filename,
