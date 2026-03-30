@@ -3,217 +3,350 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Blood Cancer Detection System</title>
-    <!-- Google Fonts -->
+    <title>Hamatologix — Blood Smear Analysis</title>
+    <!-- Google Fonts: Inter & Outfit -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
-                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    fontFamily: { 
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Outfit', 'sans-serif']
+                    },
                     colors: {
-                        brand: { 50: '#eef2ff', 100: '#e0e7ff', 500: '#6366f1', 600: '#4f46e5', 900: '#312e81' }
+                        medical: {
+                            50: '#f0f7ff',
+                            100: '#e0effe',
+                            200: '#bae0fd',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            900: '#1e3a8a',
+                            dark: '#0f172a'
+                        }
                     }
                 }
             }
         }
     </script>
     <style>
-        @keyframes float {
-            0% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
-            100% { transform: translateY(0px); }
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.1);
         }
-        .float-animation { animation: float 6s ease-in-out infinite; }
+
+        body {
+            background-color: #0f172a;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(37, 99, 235, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(30, 58, 138, 0.15) 0px, transparent 50%),
+                radial-gradient(at 50% 100%, rgba(37, 99, 235, 0.1) 0px, transparent 50%);
+            color: #f8fafc;
+        }
+
         .glass-card {
-            background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
         }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+
+        .scanning-line {
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #3b82f6, transparent);
+            position: absolute;
+            width: 100%;
+            top: 0;
+            animation: scan 2s linear infinite;
+            z-index: 20;
         }
-        .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
+
+        @keyframes scan {
+            0% { top: 0; opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { top: 100%; opacity: 0; }
+        }
+
+        .drop-zone-active {
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.05);
+            transform: scale(1.02);
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.2); }
+            50% { box-shadow: 0 0 40px rgba(59, 130, 246, 0.4); }
+        }
+
+        .premium-btn {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .premium-btn:hover {
+            box-shadow: 0 8px 25px rgba(37, 99, 235, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .result-card:hover .result-img {
+            transform: scale(1.1);
+        }
+
+        .skeleton {
+            background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+        }
+
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
     </style>
 </head>
-<body class="min-h-screen bg-gradient-to-br from-brand-50 via-white to-blue-50 font-sans text-gray-800 flex flex-col items-center justify-start p-4 md:p-8 relative overflow-x-hidden">
+<body class="min-h-screen font-sans selection:bg-medical-500 selection:text-white">
     
-    <!-- Background Elements -->
-    <div class="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-brand-100 blur-[100px] opacity-70 z-0 pointer-events-none"></div>
-    <div class="fixed bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-blue-100 blur-[100px] opacity-70 z-0 pointer-events-none"></div>
-
-    <main class="w-full max-w-4xl z-10 flex flex-col items-center">
-        
-        <!-- Header -->
-        <div class="text-center mb-8 float-animation">
-            <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white shadow-lg border border-brand-50 mb-4">
-                <svg class="w-8 h-8 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <!-- Navigation / Header -->
+    <nav class="max-w-7xl mx-auto px-6 py-8 flex justify-between items-center opacity-0 animate-fade-in" style="animation: fadeIn 1s forwards">
+        <div class="flex items-center gap-3 group">
+            <div class="w-12 h-12 bg-medical-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:rotate-12 transition-transform duration-300">
+                <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
                 </svg>
             </div>
-            <h1 class="text-3xl md:text-4xl font-bold text-gray-900 tracking-tight">Blood Cancer Detector</h1>
-            <p class="text-sm md:text-base text-gray-500 mt-2 font-medium">Upload microscopic cell images for AI analysis</p>
-        </div>
-
-        <!-- Upload Form Card -->
-        <div class="glass-card rounded-[2rem] p-6 md:p-8 w-full max-w-lg mb-8 relative">
-            
-            {% if errors %}
-                {% for error in errors %}
-                <div class="mb-4 p-4 rounded-xl bg-red-50 border border-red-100 text-red-600 flex items-start gap-3">
-                    <svg class="w-5 h-5 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-                    </svg>
-                    <span class="text-sm font-medium">{{ error }}</span>
-                </div>
-                {% endfor %}
-            {% endif %}
-
-            <form method="POST" enctype="multipart/form-data" id="uploadForm" class="space-y-6">
-                <!-- File Input Zone -->
-                <div class="relative group">
-                    <input type="file" name="file" id="fileInput" accept="image/*,.pdf" multiple class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" required>
-                    <div id="dropZone" class="border-2 border-dashed border-brand-200 rounded-2xl bg-white/50 group-hover:bg-brand-50 group-hover:border-brand-400 transition-all duration-200 p-8 text-center flex flex-col items-center justify-center min-h-[160px]">
-                        <div id="uploadIcon">
-                            <svg class="w-10 h-10 text-brand-400 group-hover:text-brand-500 transition-colors mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
-                            </svg>
-                        </div>
-                        <p id="fileName" class="text-sm font-semibold text-gray-700">Choose images or drag & drop</p>
-                        <p id="fileDesc" class="text-xs text-gray-400 mt-1">Select multiple JPEGs, PNGs, or PDFs</p>
-                    </div>
-                </div>
-
-                <!-- Submit Button -->
-                <button type="submit" id="submitBtn" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-3.5 px-6 rounded-xl shadow-lg transition-all active:scale-[0.98] flex items-center justify-center gap-2 group relative overflow-hidden">
-                    <span id="btnText" class="relative">Analyze Images</span>
-                    <svg id="btnIcon" class="w-4 h-4 relative transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
-                    </svg>
-                    <!-- Spinner -->
-                    <svg id="spinner" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white hidden relative" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                </button>
-            </form>
-        </div>
-
-        <!-- Gallery Results Section -->
-        {% if results %}
-        <div class="w-full mt-4">
-            <h2 class="text-xl font-bold text-gray-800 mb-6 text-center">Analysis Results ({{ results|length }} images)</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                
-                {% for res in results %}
-                <div class="glass-card rounded-2xl p-5 flex flex-col justify-between animate-fade-in" style="animation-delay: {{ loop.index0 * 0.1 }}s;">
-                    
-                    <div class="flex items-center justify-between mb-4 pb-3 border-b border-gray-100">
-                        <span class="text-xs font-semibold text-gray-500 truncate max-w-[120px]">{{ res.filename }}</span>
-                        <!-- Badge -->
-                        {% if res.label == 'Cancer' %}
-                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700">
-                            <span class="w-1.5 h-1.5 rounded-full bg-red-500 mr-1.5 animate-pulse"></span>
-                            Leukemia
-                        </span>
-                        {% else %}
-                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700">
-                            <span class="w-1.5 h-1.5 rounded-full bg-green-500 mr-1.5"></span>
-                            Normal
-                        </span>
-                        {% endif %}
-                    </div>
-
-                    <!-- Image Preview -->
-                    <div class="rounded-xl overflow-hidden border border-gray-100/50 shadow-sm bg-white p-1 mb-4 h-40">
-                        <img src="{{ res.image_path }}" alt="{{ res.filename }}" class="w-full h-full object-cover rounded-lg hover:scale-105 transition-transform duration-500">
-                    </div>
-
-                    <!-- Confidence Bar -->
-                    <div class="bg-gray-50 p-3 rounded-xl border border-gray-100">
-                        <div class="flex justify-between items-center mb-1.5">
-                            <span class="text-xs font-medium text-gray-600">Confidence</span>
-                            <span class="text-xs font-bold {% if res.label == 'Cancer' %}text-red-600{% else %}text-green-600{% endif %}">{{ res.confidence }}%</span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
-                            <div class="h-1.5 rounded-full transition-all duration-1000 ease-out {% if res.label == 'Cancer' %}bg-red-500{% else %}bg-green-500{% endif %}" style="width: 0%" data-width="{{ res.confidence }}%"></div>
-                        </div>
-                    </div>
-
-                </div>
-                {% endfor %}
-
-            </div>
-            
-            <div class="mt-8 text-center pb-8">
-                <a href="/" class="inline-flex items-center gap-2 text-sm text-brand-600 hover:text-brand-800 font-medium px-4 py-2 rounded-full hover:bg-white shadow transition-all">
-                    Start new analysis <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                </a>
+            <div>
+                <h1 class="text-2xl font-display font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">Hematologix</h1>
+                <p class="text-[10px] uppercase tracking-[0.2em] text-medical-500 font-bold">Microscopy Intelligence</p>
             </div>
         </div>
-        {% endif %}
+        <div class="hidden md:flex items-center gap-6 text-sm font-medium text-slate-400">
+            <span class="px-2 py-1 bg-white/5 rounded-lg border border-white/10 text-[10px]">VER: {{ model_version or '2.4.1-ML' }}</span>
+        </div>
+    </nav>
+
+    <main class="max-w-6xl mx-auto px-6 pb-20">
         
-        <!-- Footer -->
-        <div class="my-6 text-center">
-            <p class="text-xs text-gray-400 font-medium">Model Build: <span class="bg-white/50 px-2 py-0.5 rounded-md border border-gray-200/50">{{ model_version or 'v1.0' }}</span></p>
+        <!-- Hero Section -->
+        <div class="text-center mb-16 space-y-4">
+            <h2 class="text-4xl md:text-5xl font-display font-bold text-white leading-tight">
+                Blood Smear <span class="text-medical-500 underline decoration-2 underline-offset-8">Classification</span>
+            </h2>
+            <p class="text-slate-400 max-w-xl mx-auto text-lg">
+                Automated microscopy analysis for leukemia screening using high-precision neural networks.
+            </p>
+        </div>
+
+        <!-- Main Workspace -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+            
+            <!-- Upload Panel -->
+            <div class="lg:col-span-4 space-y-6">
+                <div class="glass-card rounded-[2.5rem] p-8 relative overflow-hidden group">
+                    <div class="relative z-10">
+                        <h3 class="text-xl font-display font-semibold mb-6">Analyze Sample</h3>
+                        
+                        <!-- Upload Form -->
+                        <form method="POST" enctype="multipart/form-data" id="uploadForm" class="space-y-6">
+                            <div class="relative group" id="dropZoneContainer">
+                                <input type="file" name="file" id="fileInput" accept=".png,.jpg,.jpeg,.bmp,.tiff" multiple required class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20">
+                                <div id="dropZone" class="border-2 border-dashed border-slate-700 rounded-3xl p-8 text-center transition-all duration-300 group-hover:border-medical-500/50 group-hover:bg-medical-500/5 flex flex-col items-center justify-center min-h-[220px]">
+                                    <div class="w-16 h-16 rounded-2xl bg-slate-800 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-500">
+                                        <svg class="w-8 h-8 text-medical-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                                        </svg>
+                                    </div>
+                                    <p class="text-sm font-semibold text-slate-200" id="fileNamePlaceholder">Drop images here</p>
+                                    <p class="text-[11px] text-slate-500 mt-2 uppercase tracking-wider font-bold">PNG, JPG, BMP up to 10MB</p>
+                                </div>
+                            </div>
+
+                            <button type="submit" id="submitBtn" class="premium-btn w-full py-4 text-sm font-bold text-white rounded-2xl flex items-center justify-center gap-3 group/btn">
+                                <span id="btnText">Initiate Analysis</span>
+                                <svg id="btnIcon" class="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                                </svg>
+                                <svg id="spinner" class="animate-spin h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                            </button>
+                        </form>
+                    </div>
+                    <!-- Ambient Glow -->
+                    <div class="absolute -bottom-10 -right-10 w-40 h-40 bg-medical-600/10 blur-[80px]"></div>
+                </div>
+
+                <!-- Guidelines Card -->
+                <div class="glass-card rounded-[2rem] p-6 text-xs text-slate-400 leading-relaxed border-l-4 border-l-medical-500">
+                    <h4 class="font-bold text-slate-200 mb-2 flex items-center gap-2 uppercase tracking-widest text-[10px]">
+                        <svg class="w-3 h-3 text-medical-500" fill="currentColor" viewBox="0 0 20 20"><path d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"></path></svg>
+                        Protocol
+                    </h4>
+                    Use H&E-stained microscopic blood smears only. Ensure slides are properly focused and illumination is distributed evenly across the slide.
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="lg:col-span-8 space-y-8">
+                
+                <!-- Error Messages -->
+                {% if errors %}
+                <div class="space-y-3">
+                    {% for error in errors %}
+                    <div class="glass-card rounded-2xl p-4 border-l-4 border-l-red-500 flex items-center gap-4 animate-slide-in">
+                        <div class="w-8 h-8 rounded-full bg-red-500/10 flex items-center justify-center flex-shrink-0">
+                            <svg class="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
+                        </div>
+                        <p class="text-sm font-medium text-slate-300">{{ error }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                {% if results %}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {% for res in results %}
+                    <div class="result-card glass-card rounded-[2rem] overflow-hidden group/card relative animate-fade-in">
+                        
+                        <!-- Analysis Header -->
+                        <div class="p-5 flex justify-between items-center border-b border-white/5">
+                            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest truncate max-w-[150px]">{{ res.filename }}</span>
+                            {% if "Cancer" in res.label %}
+                            <div class="flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20">
+                                <span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
+                                <span class="text-[10px] font-extrabold text-red-500 uppercase tracking-tighter">Leukemia Detected</span>
+                            </div>
+                            {% else %}
+                            <div class="flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                <span class="text-[10px] font-extrabold text-emerald-500 uppercase tracking-tighter">Negative / Normal</span>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Image Container with Scanning Effect -->
+                        <div class="relative aspect-video overflow-hidden bg-slate-900 border-b border-white/5">
+                            <img src="{{ res.image_path }}" alt="Cell Sample" class="result-img w-full h-full object-cover transition-transform duration-700">
+                            <!-- Scanning Overlay -->
+                            <div class="scanning-line"></div>
+                            <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent opacity-60"></div>
+                        </div>
+
+                        <!-- Data Panel -->
+                        <div class="p-6 space-y-4">
+                            <div class="flex justify-between items-end">
+                                <div>
+                                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Confidence Score</p>
+                                    <h4 class="text-3xl font-display font-bold {{ 'text-red-500' if 'Cancer' in res.label else 'text-emerald-500' }} tracking-tighter">
+                                        {{ res.confidence }}%
+                                    </h4>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Status</p>
+                                    <p class="text-xs font-bold text-slate-200">Awaiting Validation</p>
+                                </div>
+                            </div>
+
+                            <!-- Progress Bar -->
+                            <div class="h-2 bg-slate-800 rounded-full overflow-hidden p-[1px]">
+                                <div class="h-full rounded-full transition-all duration-[1.5s] ease-out {{ 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]' if 'Cancer' in res.label else 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]' }}" style="width: 0%" data-width="{{ res.confidence }}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% elif not errors %}
+                <!-- Empty State -->
+                <div class="glass-card rounded-[2.5rem] py-20 px-8 flex flex-col items-center justify-center text-center">
+                    <div class="w-20 h-20 bg-slate-800/50 rounded-full flex items-center justify-center mb-6">
+                        <svg class="w-10 h-10 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-display font-semibold mb-2">Workspace Empty</h3>
+                    <p class="text-slate-500 max-w-sm text-sm">Upload a microscopic image on the left panel to begin the automated screening process.</p>
+                </div>
+                {% endif %}
+
+            </div>
         </div>
     </main>
 
+    <!-- Global Progress Script -->
     <script>
-        // Update file name on selection
-        const fileInput = document.getElementById('fileInput');
-        const fileNameDisplay = document.getElementById('fileName');
-        const fileDesc = document.getElementById('fileDesc');
-        const uploadIcon = document.getElementById('uploadIcon');
+        // Progress bar animation
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                const bars = document.querySelectorAll('[data-width]');
+                bars.forEach(bar => {
+                    bar.style.width = bar.getAttribute('data-width');
+                });
 
-        fileInput.addEventListener('change', function(e) {
+                // Staggered card animation
+                const cards = document.querySelectorAll('.result-card');
+                cards.forEach((card, i) => {
+                    card.style.animationDelay = `${i * 0.1}s`;
+                });
+            }, 500);
+        });
+
+        // Drag & Drop feedback
+        const fileInput = document.getElementById('fileInput');
+        const dropZone = document.getElementById('dropZone');
+        const fileNamePlaceholder = document.getElementById('fileNamePlaceholder');
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            fileInput.addEventListener(eventName, e => dropZone.classList.add('drop-zone-active'), false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            fileInput.addEventListener(eventName, e => dropZone.classList.remove('drop-zone-active'), false);
+        });
+
+        fileInput.addEventListener('change', e => {
             const files = e.target.files;
             if (files.length > 0) {
-                if(files.length === 1) {
-                    fileNameDisplay.textContent = files[0].name;
-                } else {
-                    fileNameDisplay.textContent = `${files.length} files selected`;
-                }
-                fileDesc.textContent = 'Ready to analyze';
-                uploadIcon.innerHTML = `<svg class="w-10 h-10 text-brand-500 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+                fileNamePlaceholder.textContent = files.length === 1 ? files[0].name : `${files.length} images selected`;
+                fileNamePlaceholder.classList.add('text-medical-500');
             }
         });
 
-        // Loading state
+        // Form Submission state
         const form = document.getElementById('uploadForm');
         const submitBtn = document.getElementById('submitBtn');
         const btnText = document.getElementById('btnText');
         const btnIcon = document.getElementById('btnIcon');
         const spinner = document.getElementById('spinner');
 
-        if(form && submitBtn) {
-            form.addEventListener('submit', function() {
-                if(fileInput.files.length === 0) return;
-                btnText.textContent = 'Processing...';
-                btnIcon.classList.add('hidden');
-                spinner.classList.remove('hidden');
-                submitBtn.classList.add('opacity-90', 'cursor-not-allowed');
-                
-                // Allow form submit to continue
-            });
-        }
-
-        // Animate progress bars
-        document.addEventListener('DOMContentLoaded', () => {
-            const progressBars = document.querySelectorAll('[data-width]');
-            progressBars.forEach((bar) => {
-                setTimeout(() => {
-                    bar.style.width = bar.getAttribute('data-width');
-                }, 300);
-            });
+        form.addEventListener('submit', () => {
+            btnText.textContent = 'Analyzing Micro-data...';
+            btnIcon.classList.add('hidden');
+            spinner.classList.remove('hidden');
+            submitBtn.disabled = true;
+            submitBtn.style.opacity = '0.8';
         });
     </script>
+
+    <!-- Styling Animations -->
+    <style>
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in { animation: fadeIn 0.8s ease-out forwards; opacity: 0; }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        .animate-slide-in { animation: slideIn 0.5s ease-out forwards; }
+    </style>
 </body>
 </html>

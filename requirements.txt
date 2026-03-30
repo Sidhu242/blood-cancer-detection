@@ -3,7 +3,7 @@ tensorflow-cpu
 numpy
 pillow
 gunicorn
-pdf2image
+
 requests
 Werkzeug
 h5py
